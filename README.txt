@@ -12,6 +12,13 @@ scp  ms-sparkstreaming-1.0.jar user01@ipaddress:/user/user01/.
 if you are using virtualbox:
 scp -P 2222 ms-sparkstreaming-1.0.jar user01@127.0.0.1:/user/user01/.
 
+Create the topic
+
+maprcli stream create -path /user/user01/pump -produceperm p -consumeperm p -topicperm p
+maprcli stream topic create -path /user/user01/pump -topic sensor -partitions 3
+
+
+
 To run the MapR Streams producer and consumer:
 
 java -cp ms-sparkstreaming-1.0.jar:`mapr classpath` solution.MyProducer
