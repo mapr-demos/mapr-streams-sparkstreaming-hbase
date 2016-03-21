@@ -1,4 +1,4 @@
-package solutions
+package solution
 
 import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.client.Put
@@ -6,23 +6,13 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapred.TableOutputFormat
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.mapred.JobConf
+import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.spark.SparkConf
 
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.Seconds
 import org.apache.spark.streaming.StreamingContext
-
-
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.common.serialization.StringDeserializer
-import org.apache.spark.{ SparkConf, SparkContext }
-import org.apache.spark.SparkContext._
-import org.apache.spark.streaming._
-import org.apache.spark.streaming.dstream.{ DStream, InputDStream }
 import org.apache.spark.streaming.kafka.v09.KafkaUtils
-import org.apache.spark.streaming.{ Seconds, StreamingContext }
-import org.apache.spark.sql.functions.avg
-import org.apache.spark.sql.SQLContext
 
 object HBaseSensorStream extends Serializable {
   final val tableName = "/user/user01/sensor"
@@ -72,6 +62,14 @@ object HBaseSensorStream extends Serializable {
   }
 
   def main(args: Array[String]): Unit = {
+
+    val brokers = "maprdemo:9092" // not needed for MapR Streams, needed for Kafka
+    val groupId = "testgroup"
+    val offsetReset = "earliest"
+
+    val pollTimeout = "1000"
+    val topics = "/user/user01/pump:sensor"
+
     // set up HBase Table configuration
     val conf = HBaseConfiguration.create()
     conf.set(TableOutputFormat.OUTPUT_TABLE, tableName)
@@ -80,21 +78,14 @@ object HBaseSensorStream extends Serializable {
     jobConfig.setOutputFormat(classOf[TableOutputFormat])
     jobConfig.set(TableOutputFormat.OUTPUT_TABLE, tableName)
     println("set configuration")
-
-    val brokers = "maprdemo:9092" // not needed for MapR Streams, needed for Kafka
-    val groupId = "testgroup"
-    val offsetReset = "earliest"
-    val batchInterval = "2"
-    val pollTimeout = "1000"
-    val topics = "/user/user01/pump:sensor"
-
     val sparkConf = new SparkConf().setAppName("HBaseSensorStream")
-    .set("spark.files.overwrite", "true")
+      .set("spark.files.overwrite", "true")
     val sc = new SparkContext(sparkConf)
 
     // create a StreamingContext, the main entry point for all streaming functionality
     val ssc = new StreamingContext(sc, Seconds(2))
-        // Create direct kafka stream with brokers and topics
+
+    // Create direct kafka stream with brokers and topics
     val topicsSet = topics.split(",").toSet
     val kafkaParams = Map[String, String](
       ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG -> brokers,
@@ -108,31 +99,30 @@ object HBaseSensorStream extends Serializable {
       "spark.kafka.poll.time" -> pollTimeout
     )
 
+    // parse the lines of data into sensor objects  
     val messages = KafkaUtils.createDirectStream[String, String](ssc, kafkaParams, topicsSet)
 
     val sensorDStream = messages.map(_._2).map(Sensor.parseSensor)
 
+    sensorDStream.print()
+
     sensorDStream.foreachRDD { rdd =>
-
-      // There exists at least one element in RDD
-      if (!rdd.isEmpty) {
-        // filter sensor data for low psi
-        val alertRDD = rdd.filter(sensor => sensor.psi < 5.0)
-        alertRDD.take(1).foreach(println)
-        // convert sensor data to put object and write to HBase table column family data
-        rdd.map(Sensor.convertToPut).
+      // filter sensor data for low psi
+      val alertRDD = rdd.filter(sensor => sensor.psi < 5.0)
+      alertRDD.take(1).foreach(println)
+      // convert sensor data to put object and write to HBase table column family data
+      rdd.map(Sensor.convertToPut).
         saveAsHadoopDataset(jobConfig)
-        // convert alert data to put object and write to HBase table column family alert
-        alertRDD.map(Sensor.convertToPutAlert).
+      // convert alert data to put object and write to HBase table column family alert
+      alertRDD.map(Sensor.convertToPutAlert).
         saveAsHadoopDataset(jobConfig)
-      }
-      // Start the computation
-      ssc.start()
-      println("start streaming")
-      // Wait for the computation to terminate
-      ssc.awaitTermination()
-
     }
+    // Start the computation
+    ssc.start()
+    println("start streaming")
+    // Wait for the computation to terminate
+    ssc.awaitTermination()
 
   }
+
 }
