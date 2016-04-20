@@ -31,8 +31,17 @@ Step 3: start the streaming app
  
 spark-submit --class solution.SensorStreamConsumer --master local[2] ms-sparkstreaming-1.0.jar
 
-step 4: writing to hbase
+step 4: writing to HBase
+first make sure that you have the correct version of HBase installed, it should be 1.1.1:
 
+cat /opt/mapr/hbase/hbaseversion 
+1.1.1
+
+Next make sure the Spark HBase compatibility version is correctly configured here: 
+cat  /opt/mapr/spark/spark-1.5.2/mapr-util/compatibility.version 
+hbase_versions=1.1.1
+
+If this is not 1.1.1 fix it.
 
 Create an hbase table to write to:
 launch the hbase shell
@@ -49,7 +58,7 @@ Scan HBase to see results:
 
 $hbase shell
 
-scan '/user/user01/sensor'
+scan '/user/user01/sensor' , {'LIMIT' => 5}
 
 
 
