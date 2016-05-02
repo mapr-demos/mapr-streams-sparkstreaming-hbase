@@ -107,15 +107,17 @@ object HBaseSensorStream extends Serializable {
     sensorDStream.print()
 
     sensorDStream.foreachRDD { rdd =>
-      // filter sensor data for low psi
-      val alertRDD = rdd.filter(sensor => sensor.psi < 5.0)
-      alertRDD.take(1).foreach(println)
-      // convert sensor data to put object and write to HBase table column family data
-      rdd.map(Sensor.convertToPut).
-        saveAsHadoopDataset(jobConfig)
-      // convert alert data to put object and write to HBase table column family alert
-      alertRDD.map(Sensor.convertToPutAlert).
-        saveAsHadoopDataset(jobConfig)
+      if (!rdd.isEmpty) {
+        // filter sensor data for low psi
+        val alertRDD = rdd.filter(sensor => sensor.psi < 5.0)
+        alertRDD.take(1).foreach(println)
+        // convert sensor data to put object and write to HBase table column family data
+        rdd.map(Sensor.convertToPut).
+          saveAsHadoopDataset(jobConfig)
+        // convert alert data to put object and write to HBase table column family alert
+        alertRDD.map(Sensor.convertToPutAlert).
+          saveAsHadoopDataset(jobConfig)
+      }
     }
     // Start the computation
     ssc.start()
