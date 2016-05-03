@@ -32,6 +32,8 @@ java -cp ms-sparkstreaming-1.0.jar:`mapr classpath` solution.MyConsumer
 
 Step 3:  To run the Spark  streaming consumer:
 
+http://maprdocs.mapr.com/51/index.html#Spark/Spark_IntegrateMapRStreams_Consume.html
+
 start the streaming app
  
 spark-submit --class solution.SensorStreamConsumer --master local[2] ms-sparkstreaming-1.0.jar
@@ -41,6 +43,8 @@ ctl-c to stop
 step 4: Spark streaming app writing to hbase
 
 first make sure that you have the correct version of HBase installed, it should be 1.1.1:
+
+http://maprdocs.mapr.com/51/index.html#Spark/IntegrateSpark-IntegrateS_29656196-d3e150.html
 
 cat /opt/mapr/hbase/hbaseversion 
 1.1.1
@@ -91,6 +95,7 @@ truncate '/user/user01/sensor'
 
 ******  For a Spark streaming to read from a MapR Streams topic, write alerts to another topic. Then a MapR Streams consumer to read the alerts 
 and write to HBase:
+http://maprdocs.mapr.com/51/index.html#Spark/Spark_IntegrateMapRStreams_Produce.html
 
 create alert topic, if you did not already do so
 
