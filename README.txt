@@ -6,8 +6,10 @@ Step 1: First compile the project on eclipse: Select project  -> Run As -> Maven
 
 Step 2: use scp to copy the ms-sparkstreaming-1.0.jar to the mapr sandbox or cluster
 
-also use scp to copy the data sensor.csv file from the data folder to the cluster
+also use scp to copy the data  sensor.csv file from the data folder to the cluster
 put this file in a folder called data. The producer reads from this file to send messages.
+
+copy the jar from the target folder to the sandbox or cluster:
 
 scp  ms-sparkstreaming-1.0.jar user01@ipaddress:/user/user01/.
 if you are using virtualbox:
