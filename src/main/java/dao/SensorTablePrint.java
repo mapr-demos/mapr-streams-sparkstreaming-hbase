@@ -29,21 +29,24 @@ public class SensorTablePrint {
 
     }
 
-
-
     public static void printTable(SensorDAO dao) throws IOException {
-        System.out.println("printTable");
+        System.out.println("print 20 rows from Table");
         List<Sensor> list = dao.getSensors(20);
         System.out
                 .println("*****************************************************");
-        System.out.println("print Inventorys from Table ...");
+        System.out.println("print Sensors from Table Column family data ...");
         for (Sensor sensor : list) {
             System.out.println(sensor);
         }
+        System.out
+                .println("*****************************************************");
+        System.out.println("print 20 rows from Table Column family alerts");
+        dao.printAlerts(20);
+
+        System.out
+                .println("*****************************************************");
+        System.out.println("print 20 rows from Table Column family stats");
+        dao.printStats(20);
     }
-
- 
-
-  
 
 }

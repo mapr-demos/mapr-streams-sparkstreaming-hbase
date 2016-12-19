@@ -67,7 +67,7 @@ object HBaseSensorStream extends Serializable {
     val groupId = "testgroup"
     val offsetReset = "earliest"
 
-    val pollTimeout = "1000"
+    val pollTimeout = "5000"
     val topics = "/user/user01/pump:sensor"
 
     // set up HBase Table configuration

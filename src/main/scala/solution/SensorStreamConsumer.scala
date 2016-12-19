@@ -30,7 +30,7 @@ object SensorStreamConsumer extends Serializable {
     val groupId = "testgroup"
     val offsetReset = "earliest"
     val batchInterval = "2"
-    val pollTimeout = "1000"
+    val pollTimeout = "5000"
     val topics = "/user/user01/pump:sensor"
 
     val sparkConf = new SparkConf().setAppName("SensorStream")
@@ -70,9 +70,9 @@ object SensorStreamConsumer extends Serializable {
         println("sensor data")
         sensorDF.show()
         sensorDF.registerTempTable("sensor")
-        val res = sqlContext.sql("SELECT resid, date, count(resid) as total FROM sensor GROUP BY resid, date")
-        println("sensor count ")
-        res.show
+//        val res = sqlContext.sql("SELECT resid, date, count(resid) as total FROM sensor GROUP BY resid, date")
+//        println("sensor count ")
+//        res.show
         val res2 = sqlContext.sql("SELECT resid, date, avg(psi) as avgpsi FROM sensor GROUP BY resid,date")
         println("sensor psi average")
         res2.show

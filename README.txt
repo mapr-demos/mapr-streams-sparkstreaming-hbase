@@ -12,8 +12,20 @@ put this file in a folder called data. The producer reads from this file to send
 copy the jar from the target folder to the sandbox or cluster:
 
 scp  ms-sparkstreaming-1.0.jar user01@ipaddress:/user/user01/.
+
+if you are using vmware:
+scp  ms-sparkstreaming-1.0.jar user01@<ipaddress>:/user/user01/.
+
 if you are using virtualbox:
 scp -P 2222 ms-sparkstreaming-1.0.jar user01@127.0.0.1:/user/user01/.
+
+ssh into mapr cluster or sandbox  
+
+if you are using vmware:
+ ssh user01@<ipaddress>
+
+if you are using virtualbox:
+ ssh user01@127.0.0.1 -p 2222
 
 Create the topics
 
@@ -52,7 +64,7 @@ cat /opt/mapr/hbase/hbaseversion
 1.1.1
 
 Next make sure the Spark HBase compatibility version is correctly configured here: 
-cat  /opt/mapr/spark/spark-1.5.2/mapr-util/compatibility.version 
+cat  /opt/mapr/spark/spark-1.6.1/mapr-util/compatibility.version 
 hbase_versions=1.1.1
 
 If this is not 1.1.1 fix it.
@@ -77,6 +89,8 @@ $hbase shell
 scan '/user/user01/sensor' , {'LIMIT' => 5}
 
 scan '/user/user01/sensor' , {'COLUMNS'=>'alert',  'LIMIT' => 50}
+
+ java -cp ms-sparkstreaming-1.0.jar:`hbase classpath` dao.SensorTablePrint
 
 Step 5:
 exit, run spark (not streaming) app to read from hbase and write daily stats 

@@ -1,4 +1,3 @@
-
 package dao;
 
 import java.io.IOException;
@@ -26,9 +25,10 @@ public class SensorDAO {
     public static final String tableName = userdirectory + "/sensor";
     public static final byte[] TABLE_NAME = Bytes.toBytes(tableName);
 
-    // Column Family is 'alert'
+    // Column Family  'data'
+    public static final byte[] cfDataBytes = Bytes.toBytes("data");
     public static final byte[] cfAlertBytes = Bytes.toBytes("alert");
-
+    public static final byte[] cfStatsBytes = Bytes.toBytes("stats");
     public static final byte[] colHzBytes = Bytes.toBytes("hz");
     public static final byte[] colDispBytes = Bytes.toBytes("disp");
     public static final byte[] colFloBytes = Bytes.toBytes("flo");
@@ -52,17 +52,22 @@ public class SensorDAO {
     public Get mkGet(String stock) throws IOException {
         log.debug(String.format("Creating Get for %s", stock));
         Get g = new Get(Bytes.toBytes(stock));
-        g.addFamily(cfAlertBytes);
+        g.addFamily(cfDataBytes);
         System.out.println("mkGet   [rowkey= " + stock + "]");
         return g;
     }
 
-
-
     private Scan mkScan() {
         Scan s = new Scan();
-        s.addFamily(cfAlertBytes);
-        System.out.println("mkScan for Sensor table ");
+        s.addFamily(cfDataBytes);
+
+        return s;
+    }
+
+    private Scan mkScan(byte[] family) {
+        Scan s = new Scan();
+        s.addFamily(family);
+
         return s;
     }
 
@@ -112,51 +117,91 @@ public class SensorDAO {
         ArrayList<Sensor> inventoryList = new ArrayList<Sensor>();
         System.out.println("Scan Sensor Results :");
         for (Result result : results) {
-            System.out.println(Tools.resultMapToString(result));
+          //  System.out.println(Tools.resultMapToString(result));
             // create Sensor Model Object from Result
             Sensor inv = createSensor(result);
             // add inventory object to list
             inventoryList.add(inv);
             count++;
-            if (count>=numb) break;
+            if (count >= numb) {
+                break;
+            }
         }
 
         // return list of inventory objects
         return inventoryList;
     }
+
+    public void printAlerts(int numb) throws IOException {
+        int count = 0;
+        // make a scan object
+        Scan scan = mkScan(cfAlertBytes);
+        // call htable.getScanner with scan object
+        ResultScanner results = table.getScanner(scan);
+
+        System.out.println("Scan Sensor Alert Results :");
+        for (Result result : results) {
+            System.out.println(Tools.resultMapToString(result));
+
+            count++;
+            if (count >= numb) {
+                break;
+            }
+        }
+
+    }
+
+    public void printStats(int numb) throws IOException {
+        int count = 0;
+        // make a scan object
+        Scan scan = mkScan(cfStatsBytes);
+        // call htable.getScanner with scan object
+        ResultScanner results = table.getScanner(scan);
+
+        System.out.println("Scan Sensor Stats Results :");
+        for (Result result : results) {
+            System.out.println(Tools.resultMapToString(result));
+
+            count++;
+            if (count >= numb) {
+                break;
+            }
+        }
+
+    }
+
     public Put mkPut(Sensor sensor) {
         String dateTime = sensor.date + " " + sensor.time;
         // create a composite row key: sensorid_date time
         String key = sensor.resid + "_" + dateTime;
         Put put = new Put(Bytes.toBytes(key)); //
-        put.addColumn(cfAlertBytes, colHzBytes, Bytes.toBytes(sensor.hz));
-        put.addColumn(cfAlertBytes, colDispBytes, Bytes.toBytes(sensor.disp));
-        put.addColumn(cfAlertBytes, colFloBytes, Bytes.toBytes(sensor.flo));
-        put.addColumn(cfAlertBytes, colSedBytes, Bytes.toBytes(sensor.sedPPM));
-        put.addColumn(cfAlertBytes, colPsiBytes, Bytes.toBytes(sensor.psi));
-        put.addColumn(cfAlertBytes, colChlBytes, Bytes.toBytes(sensor.chlPPM));
+        put.addColumn(cfDataBytes, colHzBytes, Bytes.toBytes(sensor.hz));
+        put.addColumn(cfDataBytes, colDispBytes, Bytes.toBytes(sensor.disp));
+        put.addColumn(cfDataBytes, colFloBytes, Bytes.toBytes(sensor.flo));
+        put.addColumn(cfDataBytes, colSedBytes, Bytes.toBytes(sensor.sedPPM));
+        put.addColumn(cfDataBytes, colPsiBytes, Bytes.toBytes(sensor.psi));
+        put.addColumn(cfDataBytes, colChlBytes, Bytes.toBytes(sensor.chlPPM));
         System.out.println("mkPut   [" + sensor + "]");
         return put;
     }
     /*
      * create Sensor Model Object from Get or Scan Result
      */
+
     public Sensor createSensor(Result result) {
         // call Sensor constructor with row key and quantity
 
         String rowkey = Bytes.toString(result.getRow());
         String p0 = rowkey;
-        Double p1 = Bytes.toDouble(result.getValue(cfAlertBytes, Bytes.toBytes("hz")));
-        Double  p2 = Bytes.toDouble(result.getValue(cfAlertBytes, Bytes.toBytes("disp")));
-        Double  p3 = Bytes.toDouble(result.getValue(cfAlertBytes, Bytes.toBytes("flo")));
-        Double  p4 = Bytes.toDouble(result.getValue(cfAlertBytes, Bytes.toBytes("sedPPM")));
-        Double  p5 = Bytes.toDouble(result.getValue(cfAlertBytes, Bytes.toBytes("psi")));
-        Double  p6 = Bytes.toDouble(result.getValue(cfAlertBytes, Bytes.toBytes("chlPPM")));
+        Double p1 = Bytes.toDouble(result.getValue(cfDataBytes, Bytes.toBytes("hz")));
+        Double p2 = Bytes.toDouble(result.getValue(cfDataBytes, Bytes.toBytes("disp")));
+        Double p3 = Bytes.toDouble(result.getValue(cfDataBytes, Bytes.toBytes("flo")));
+        Double p4 = Bytes.toDouble(result.getValue(cfDataBytes, Bytes.toBytes("sedPPM")));
+        Double p5 = Bytes.toDouble(result.getValue(cfDataBytes, Bytes.toBytes("psi")));
+        Double p6 = Bytes.toDouble(result.getValue(cfDataBytes, Bytes.toBytes("chlPPM")));
         Sensor inv = new Sensor(p0, p1, p2, p3, p4, p5, p6);
         return inv;
     }
-
-
 
     public static String resultToString(byte[] row, byte[] family,
             byte[] qualifier, byte[] value) {
@@ -164,7 +209,7 @@ public class SensorDAO {
         strBuilder.append("Result with rowKey " + Bytes.toString(row) + " : ");
         strBuilder.append(" Family - " + Bytes.toString(family));
         strBuilder.append(" : Qualifier - " + Bytes.toString(qualifier));
-        strBuilder.append(" : Value: " + Bytes.toLong(value));
+        strBuilder.append(" : Value: " + Bytes.toDouble(value));
         return strBuilder.toString();
     }
 

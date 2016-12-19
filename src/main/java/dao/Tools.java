@@ -15,7 +15,7 @@ public class Tools {
 		strBuilder.append("Result with rowKey " + Bytes.toString(row) + " : ");
 		strBuilder.append(" Family - " + Bytes.toString(family));
 		strBuilder.append(" : Qualifier - " + Bytes.toString(qualifier));
-		strBuilder.append(" : Value: " + Bytes.toLong(value));
+		strBuilder.append(" : Value: " + Bytes.toDouble(value));
 		return strBuilder.toString();
 	}
 
@@ -29,7 +29,7 @@ public class Tools {
 					+ Bytes.toString(CellUtil.cloneFamily(kv)));
 			strBuilder.append(" : Qualifier - "
 					+ Bytes.toString(CellUtil.cloneQualifier(kv)));
-			strBuilder.append(" : Value: " + Bytes.toLong(CellUtil.cloneValue(kv) )
+			strBuilder.append(" : Value: " + Bytes.toDouble(CellUtil.cloneValue(kv) )
 					+ " ");
 		}
 		return strBuilder.toString();
@@ -49,15 +49,16 @@ public class Tools {
 			NavigableMap<byte[], NavigableMap<Long, byte[]>> qualMap = familyMap
 					.get(family);
 			for (byte[] qual : qualMap.keySet()) {
-				strBuilder.append(" : Qualifier - " + Bytes.toString(qual));
+				strBuilder.append("\n : Qualifier - " + Bytes.toString(qual));
 
 				NavigableMap<Long, byte[]> valueTsMap = qualMap.get(qual);
 				for (Long tstamp : valueTsMap.keySet()) {
 
 					byte[] valueBytes = valueTsMap.get(tstamp);
 
-					strBuilder.append(" : Value: " + Bytes.toLong(valueBytes)
-							+ " ");
+					strBuilder.append(" : Value: " + Bytes.toDouble(valueBytes)
+							+ ' ');
+                                   
 
 				}
 
